@@ -5,7 +5,8 @@ import {
   LayoutDashboard, 
   UserCircle,
   Menu,
-  X
+  X,
+  ShieldCheck
 } from 'lucide-react';
 import { Project, User, UserRole } from './types';
 import ProjectList from './components/ProjectList';
@@ -16,16 +17,29 @@ import { exportToExcel } from './services/excelService';
 
 const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+  // Default to EDITOR. No toggle button is provided in the UI.
   const [currentUser, setCurrentUser] = useState<User>({
-    name: "Admin User",
-    role: UserRole.ADMIN,
-    phone: "1234567890"
+    name: "Guest Editor",
+    role: UserRole.EDITOR
   });
 
   const [projects, setProjects] = useState<Project[]>(() => {
     const saved = localStorage.getItem('estate_projects');
     return saved ? JSON.parse(saved) : [];
   });
+
+  // Role Logic: Check for a secret URL parameter to enable Admin mode for the owner
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('mode') === 'admin') {
+      setCurrentUser({
+        name: "Owner / Admin",
+        role: UserRole.ADMIN,
+        phone: "Master Access"
+      });
+    }
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('estate_projects', JSON.stringify(projects));
@@ -43,15 +57,6 @@ const App: React.FC = () => {
 
   const updateProject = (updatedProject: Project) => {
     setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
-  };
-
-  const handleRoleToggle = () => {
-    setCurrentUser(prev => ({
-      ...prev,
-      role: prev.role === UserRole.ADMIN ? UserRole.EDITOR : UserRole.ADMIN,
-      name: prev.role === UserRole.ADMIN ? "Agent Alex" : "Admin User",
-      phone: prev.role === UserRole.ADMIN ? "9876543210" : "1234567890"
-    }));
   };
 
   const handleExport = () => {
@@ -96,25 +101,24 @@ const App: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3 lg:gap-6">
-              <button 
-                onClick={handleRoleToggle}
-                className={`text-[10px] lg:text-xs font-bold px-2 lg:px-3 py-1 lg:py-1.5 rounded-full border transition-colors whitespace-nowrap ${
-                  currentUser.role === UserRole.ADMIN 
-                    ? 'bg-blue-50 border-blue-200 text-blue-700' 
-                    : 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                }`}
-              >
-                <span className="hidden xs:inline">Switch to </span>
-                {currentUser.role === UserRole.ADMIN ? 'Editor' : 'Admin'}
-              </button>
+              {currentUser.role === UserRole.ADMIN && (
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100 animate-pulse">
+                  <ShieldCheck size={14} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Admin Mode</span>
+                </div>
+              )}
               
               <div className="flex items-center gap-2 lg:gap-3">
                 <div className="text-right hidden sm:block">
-                  <p className="text-sm font-bold text-slate-900 truncate max-w-[100px]">{currentUser.name}</p>
-                  <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{currentUser.role}</p>
+                  <p className="text-sm font-bold text-slate-900 truncate max-w-[120px]">{currentUser.name}</p>
+                  <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest leading-none">
+                    {currentUser.role === UserRole.ADMIN ? 'Primary Owner' : 'Verified Editor'}
+                  </p>
                 </div>
-                <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200 flex-shrink-0">
-                  <UserCircle className="text-slate-400" size={20} />
+                <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center border transition-colors ${
+                  currentUser.role === UserRole.ADMIN ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-100 border-slate-200 text-slate-400'
+                }`}>
+                  <UserCircle size={currentUser.role === UserRole.ADMIN ? 24 : 20} />
                 </div>
               </div>
             </div>
