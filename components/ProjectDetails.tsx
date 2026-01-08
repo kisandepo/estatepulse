@@ -174,16 +174,20 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({ projects, role, current
   const generateAiInsight = async () => {
     setIsGeneratingAi(true);
     try {
+      // Correct initialization using process.env.API_KEY injected by Netlify
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const prompt = `Perform a high-level real estate market analysis for project: ${project.name} in ${project.location}. Stats: ${stats.totalUnits} total units, ${stats.totalInteractions} client interactions. Recommend a sales strategy. Concise, under 120 words.`;
+      const promptText = `Perform a high-level real estate market analysis for project: ${project.name} in ${project.location}. Stats: ${stats.totalUnits} total units, ${stats.totalInteractions} client interactions. Recommend a sales strategy. Concise, under 120 words.`;
 
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: prompt
+        contents: promptText
       });
-      setAiInsight(response.text);
+      
+      // Correct text property extraction
+      setAiInsight(response.text || "No insights available at this moment.");
     } catch (err) {
-      setAiInsight("AI insight service currently unavailable.");
+      console.error("Gemini AI Error:", err);
+      setAiInsight("AI insight service currently unavailable. Please ensure your API_KEY is set in Netlify environment variables.");
     } finally {
       setIsGeneratingAi(false);
     }
