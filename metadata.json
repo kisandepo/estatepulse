@@ -1,0 +1,5 @@
+{
+  "name": "EstatePulse Dashboard",
+  "description": "A comprehensive real estate project management system allowing admins to manage property units and agents to track customer interactions and pricing history, with Excel export and AI-powered insights.",
+  "requestFramePermissions": []
+}
